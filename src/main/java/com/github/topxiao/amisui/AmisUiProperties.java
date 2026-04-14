@@ -1,7 +1,6 @@
 package com.github.topxiao.amisui;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.util.List;
 import java.util.Map;
@@ -165,7 +164,6 @@ public class AmisUiProperties {
         /**
          * Schema API - 支持 schema-api (kebab-case) 和 schemaApi (camelCase)
          */
-        @NestedConfigurationProperty
         private String schemaApi;
 
         /**
@@ -176,7 +174,6 @@ public class AmisUiProperties {
         /**
          * 子页面
          */
-        @NestedConfigurationProperty
         private List<Page> children;
 
         /**

@@ -6,7 +6,7 @@
     "copy-amis-sdk": "node -e \"const fs=require('fs'),path=require('path');const dest='src/main/resources/static/cdn/amis/6.12.0';if(fs.existsSync(dest))fs.rmSync(dest,{recursive:true,force:true});fs.mkdirSync(dest+'/umd',{recursive:true});function copyDir(s,d){fs.mkdirSync(d,{recursive:true});fs.readdirSync(s).forEach(i=>{const a=path.join(s,i),b=path.join(d,i);fs.statSync(a).isDirectory()?copyDir(a,b):fs.copyFileSync(a,b);});}function strip(f){if(!fs.existsSync(f))return;let c=fs.readFileSync(f,'utf8');fs.writeFileSync(f,c.replace(/\\/\\/\\# sourceMappingURL=.*$/gm,''));}copyDir('node_modules/amis/sdk',dest);fs.copyFileSync('node_modules/history/umd/history.production.min.js',dest+'/umd/history.js');strip(dest+'/umd/history.js');console.log('amis sdk copied without sourcemap');\""
   },
   "dependencies": {
-    "amis": "^6.12.0",
+    "amis": "6.12.0",
     "history": "^5.3.0"
   }
 }

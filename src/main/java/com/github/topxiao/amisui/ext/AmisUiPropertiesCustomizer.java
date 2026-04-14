@@ -46,15 +46,6 @@ public interface AmisUiPropertiesCustomizer {
      */
     AmisUiProperties customize(AmisUiProperties properties);
 
-    /**
-     * 是否支持指定属性名的自定义
-     * 用于性能优化，避免不必要的调用
-     *
-     * @param propertyName 属性名
-     * @return 是否支持
-     */
-    default boolean supports(String propertyName) {
-        return true;
-    }
+
 }
 
