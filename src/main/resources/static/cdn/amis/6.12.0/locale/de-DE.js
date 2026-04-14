@@ -123,8 +123,6 @@ amisRequire('amis').registerLocale('de-DE', {
   'deleteFailed': 'Fehler beim Löschen',
   'desc': 'Absteigend',
   'Dialog.close': 'Schließen',
-  'Dialog.screen': 'Vollbildmodus',
-  'Dialog.reset': 'Vollbildmodus beenden',
   'Dialog.title': 'Titel',
   'Embed.invalidRoot': 'Ungültiger Root-Selektor',
   'Embed.downloading': 'Download starten',
@@ -196,7 +194,6 @@ amisRequire('amis').registerLocale('de-DE', {
   'LocationPicker.getLocation':
     'Klicken Sie hier, um Standortinformationen zu erhalten',
   'Month.placeholder': 'Wählen Sie einen Monat',
-  'MapPicker.searchPlaceholder': 'Standort suchen',
   'Nav.sourceError': 'Fehler beim Abrufen des Links',
   'networkError':
     'Fehler beim Netzwerkzugriff oder fehlende CORS-Konfiguration',
