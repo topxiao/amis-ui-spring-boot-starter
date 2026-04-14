@@ -1,15 +1,15 @@
 package com.github.topxiao.amisui;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Amis UI Controller
  */
 @RestController
-@RequestMapping("/")
+@ConditionalOnProperty(prefix = "amis.ui", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class AmisUiController {
 
     private final AmisUiService amisUiService;
@@ -18,22 +18,12 @@ public class AmisUiController {
         this.amisUiService = amisUiService;
     }
 
-    /**
-     * Serve the main Amis UI page
-     *
-     * @return HTML content
-     */
-    @GetMapping(value = "/", produces = MediaType.TEXT_HTML_VALUE)
+    @GetMapping(value = "${amis.ui.base-path:/amis}", produces = MediaType.TEXT_HTML_VALUE)
     public String index() {
         return amisUiService.renderHtml();
     }
 
-    /**
-     * Health check endpoint
-     *
-     * @return health status
-     */
-    @GetMapping("/health")
+    @GetMapping("${amis.ui.base-path:/amis}/health")
     public String health() {
         return "Amis UI Starter is running";
     }

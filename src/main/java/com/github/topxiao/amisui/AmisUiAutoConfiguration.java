@@ -15,8 +15,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 
 import java.util.List;
@@ -29,7 +29,6 @@ import java.util.List;
 @ConditionalOnClass({AmisUiService.class})
 @ConditionalOnProperty(prefix = "amis.ui", name = "enabled", havingValue = "true", matchIfMissing = true)
 @EnableConfigurationProperties(AmisUiProperties.class)
-@ComponentScan(basePackages = "com.github.topxiao.amisui")
 public class AmisUiAutoConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(AmisUiAutoConfiguration.class);
@@ -38,6 +37,7 @@ public class AmisUiAutoConfiguration {
      * Amis UI Extension Registry Bean
      */
     @Bean
+    @Primary
     @ConditionalOnMissingBean
     public AmisUiExtensionRegistry amisUiExtensionRegistry() {
         return new DefaultAmisUiExtensionRegistry();
@@ -54,7 +54,7 @@ public class AmisUiAutoConfiguration {
      */
     @Bean
     @ConditionalOnMissingBean(name = "amisUiExtensionRegistrar")
-    public Object amisUiExtensionRegistrar(
+    public AmisUiExtensionRegistry amisUiExtensionRegistrar(
             AmisUiExtensionRegistry extensionRegistry,
             List<AmisUiExtension> extensions,
             List<AmisUiPropertiesCustomizer> propertiesCustomizers,
