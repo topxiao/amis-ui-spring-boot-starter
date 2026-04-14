@@ -7,3 +7,5 @@ node_modules/
 .idea/
 *.iml
 .DS_Store
+package-lock.json
+docs/superpowers/
