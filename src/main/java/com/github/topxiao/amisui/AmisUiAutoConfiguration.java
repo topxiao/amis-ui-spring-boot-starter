@@ -16,6 +16,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 
@@ -29,6 +30,7 @@ import java.util.List;
 @ConditionalOnClass({AmisUiService.class})
 @ConditionalOnProperty(prefix = "amis.ui", name = "enabled", havingValue = "true", matchIfMissing = true)
 @EnableConfigurationProperties(AmisUiProperties.class)
+@Import({AmisUiController.class, AmisUiWebConfiguration.class})
 public class AmisUiAutoConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(AmisUiAutoConfiguration.class);
