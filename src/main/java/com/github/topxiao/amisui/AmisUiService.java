@@ -51,6 +51,20 @@ public class AmisUiService {
     }
 
     /**
+     * Ensure the service is properly initialized before rendering.
+     *
+     * @throws IllegalStateException if properties is null
+     */
+    private void ensureInitialized() {
+        if (properties == null) {
+            throw new IllegalStateException("AmisUiProperties not configured");
+        }
+        if (properties.getApp() == null) {
+            properties.setApp(new AmisUiProperties.App());
+        }
+    }
+
+    /**
      * Render the complete HTML page
      *
      * @return HTML string
@@ -66,6 +80,8 @@ public class AmisUiService {
      * @return HTML string
      */
     public String renderHtml(Map<String, Object> customData) {
+        ensureInitialized();
+
         // Apply properties customizers first
         AmisUiProperties customizedProperties = applyPropertiesCustomizers();
 
@@ -121,13 +137,30 @@ public class AmisUiService {
      * @return the complete HTML page
      */
     public String renderHtml(String schemaJson, String title, String customCss, String customJs) {
+        ensureInitialized();
+
+        // Validate and sanitize schemaJson to prevent XSS injection
+        String safeSchemaJson;
+        if (schemaJson != null && !schemaJson.isBlank()) {
+            try {
+                Object parsed = objectMapper.readValue(schemaJson, Object.class);
+                safeSchemaJson = objectMapper.writeValueAsString(parsed);
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Invalid schemaJson: must be valid JSON", e);
+            }
+        } else {
+            safeSchemaJson = "{}";
+        }
+
         AmisUiProperties customizedProperties = applyPropertiesCustomizers();
         String version = customizedProperties.getVersion();
         String ctx = Optional.ofNullable(customizedProperties.getCtx())
                 .filter(StringUtils::hasText)
                 .orElseGet(() -> Optional.ofNullable(properties.getCtx())
                         .filter(StringUtils::hasText)
-                        .orElse(environment.getProperty("server.servlet.context-path", "")));
+                        .orElseGet(() -> environment != null
+                                ? environment.getProperty("server.servlet.context-path", "")
+                                : ""));
         String theme = Optional.ofNullable(customizedProperties.getApp().getTheme())
                 .filter(StringUtils::hasText)
                 .orElseGet(() -> Optional.ofNullable(properties.getApp().getTheme()).orElse("ang"));
@@ -135,7 +168,7 @@ public class AmisUiService {
         String html = getSchemaPageTemplate()
                 .replace("${title}", title != null ? title : "AMIS Page")
                 .replace("${version}", version)
-                .replace("${schemaJson}", schemaJson != null ? schemaJson : "{}")
+                .replace("${schemaJson}", safeSchemaJson)
                 .replace("${ctx}", ctx)
                 .replace("${theme}", theme)
                 .replace("${customCss}", customCss != null ? customCss : "")
@@ -166,7 +199,12 @@ public class AmisUiService {
         }
         List<AmisUiRenderInterceptor> interceptors = extensionRegistry.getRenderInterceptors();
         for (AmisUiRenderInterceptor interceptor : interceptors) {
-            interceptor.beforeRender(context);
+            try {
+                interceptor.beforeRender(context);
+            } catch (Exception e) {
+                log.warn("Render interceptor '{}' failed in beforeRender, skipping",
+                        interceptor.getClass().getSimpleName(), e);
+            }
         }
     }
 
@@ -180,7 +218,12 @@ public class AmisUiService {
         String result = html;
         List<AmisUiRenderInterceptor> interceptors = extensionRegistry.getRenderInterceptors();
         for (AmisUiRenderInterceptor interceptor : interceptors) {
-            result = interceptor.afterRender(context, result);
+            try {
+                result = interceptor.afterRender(context, result);
+            } catch (Exception e) {
+                log.warn("Render interceptor '{}' failed in afterRender, using previous result",
+                        interceptor.getClass().getSimpleName(), e);
+            }
         }
         return result;
     }
@@ -519,7 +562,7 @@ public class AmisUiService {
                     .replace("${version}", properties.getVersion())
                     .replace("${appJson}", appJson)
                     .replace("${apiHost}", StringUtils.hasText(properties.getApiHost()) ? properties.getApiHost() : "")
-                    .replace("${ctx}", StringUtils.hasText(properties.getCtx()) ? properties.getCtx() : environment.getProperty("server.servlet.context-path", ""))
+                    .replace("${ctx}", StringUtils.hasText(properties.getCtx()) ? properties.getCtx() : (environment != null ? environment.getProperty("server.servlet.context-path", "") : ""))
                     .replace("${theme}", properties.getApp().getTheme())
                     .replace("${customCss}", StringUtils.hasText(properties.getCustomCss()) ? properties.getCustomCss() : "")
                     .replace("${customJs}", StringUtils.hasText(properties.getCustomJs()) ? properties.getCustomJs() : "");
