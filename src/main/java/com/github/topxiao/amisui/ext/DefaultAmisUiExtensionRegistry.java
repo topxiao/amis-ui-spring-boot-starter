@@ -43,6 +43,7 @@ public class DefaultAmisUiExtensionRegistry implements AmisUiExtensionRegistry {
         }
         
         log.debug("Registered extension: {}", extension.getName());
+        sortCustomizers();
     }
 
     @Override
@@ -55,6 +56,7 @@ public class DefaultAmisUiExtensionRegistry implements AmisUiExtensionRegistry {
         if (!propertiesCustomizers.contains(customizer)) {
             propertiesCustomizers.add(customizer);
             log.debug("Registered properties customizer: {}", customizer.getClass().getSimpleName());
+            sortCustomizers();
         }
     }
 
@@ -68,6 +70,7 @@ public class DefaultAmisUiExtensionRegistry implements AmisUiExtensionRegistry {
         if (!pageCustomizers.contains(customizer)) {
             pageCustomizers.add(customizer);
             log.debug("Registered page customizer: {}", customizer.getClass().getSimpleName());
+            sortCustomizers();
         }
     }
 
@@ -81,28 +84,29 @@ public class DefaultAmisUiExtensionRegistry implements AmisUiExtensionRegistry {
         if (!renderInterceptors.contains(interceptor)) {
             renderInterceptors.add(interceptor);
             log.debug("Registered render interceptor: {}", interceptor.getClass().getSimpleName());
+            sortCustomizers();
         }
     }
 
     @Override
     public List<AmisUiPropertiesCustomizer> getPropertiesCustomizers() {
-        return propertiesCustomizers.stream()
-                .sorted(AnnotationAwareOrderComparator.INSTANCE)
-                .toList();
+        return propertiesCustomizers;
     }
 
     @Override
     public List<AmisUiRenderInterceptor> getRenderInterceptors() {
-        return renderInterceptors.stream()
-                .sorted(AnnotationAwareOrderComparator.INSTANCE)
-                .toList();
+        return renderInterceptors;
     }
 
     @Override
     public List<AmisUiPageCustomizer> getPageCustomizers() {
-        return pageCustomizers.stream()
-                .sorted(AnnotationAwareOrderComparator.INSTANCE)
-                .toList();
+        return pageCustomizers;
+    }
+
+    private void sortCustomizers() {
+        propertiesCustomizers.sort(AnnotationAwareOrderComparator.INSTANCE);
+        pageCustomizers.sort(AnnotationAwareOrderComparator.INSTANCE);
+        renderInterceptors.sort(AnnotationAwareOrderComparator.INSTANCE);
     }
 
     @Override

@@ -394,11 +394,9 @@ public class AmisUiService {
                             },
                             {
                                 requestAdaptor(api) {
-                                    console.log(api);
                                     return api;
                                 },
                                 responseAdaptor(api, payload, query, request, response) {
-                                    console.log(api, payload, query, request, response);
                                     return payload;
                                 },
                                 updateLocation: (location, replace) => {
