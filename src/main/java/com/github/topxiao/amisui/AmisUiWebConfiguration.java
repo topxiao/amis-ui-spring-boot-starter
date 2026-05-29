@@ -1,7 +1,9 @@
 package com.github.topxiao.amisui;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -21,5 +23,18 @@ public class AmisUiWebConfiguration implements WebMvcConfigurer {
         registry.addResourceHandler("/cdn/amis/**")
                 .addResourceLocations("classpath:/static/cdn/amis/")
                 .setCachePeriod(3600); // Cache for 1 hour
+    }
+
+    /**
+     * 注册 AmisViewResolver，解析 amis: 前缀的视图名。
+     * <p>
+     * 使用 HIGHEST_PRECEDENCE 确保快速匹配 amis: 前缀，
+     * 不影响 Thymeleaf 等其他 ViewResolver。
+     */
+    @Bean
+    public AmisViewResolver amisViewResolver(AmisUiService amisUiService) {
+        AmisViewResolver resolver = new AmisViewResolver(amisUiService);
+        resolver.setOrder(Ordered.HIGHEST_PRECEDENCE);
+        return resolver;
     }
 }

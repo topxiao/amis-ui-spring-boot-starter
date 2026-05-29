@@ -18,10 +18,8 @@ class AmisUiServiceUnitTest {
 
     @BeforeEach
     void setUp() {
-        service = new AmisUiService();
         properties = new AmisUiProperties();
-        service.setProperties(properties);
-        service.setObjectMapper(new ObjectMapper());
+        service = new AmisUiService(properties, null, new ObjectMapper(), null);
     }
 
     // --- schemaJson validation ---
@@ -53,21 +51,27 @@ class AmisUiServiceUnitTest {
         assertTrue(result.contains("{}"));
     }
 
-    // --- properties null check ---
+    // --- null-safe constructor defaults ---
 
     @Test
-    void renderHtml_propertiesNull_throwsIllegalState() {
-        AmisUiService svc = new AmisUiService();
-        svc.setObjectMapper(new ObjectMapper());
-        assertThrows(IllegalStateException.class, () -> svc.renderHtml());
+    void renderHtml_nullProperties_defaultsToNewProperties() {
+        // Constructor defaults null properties to new AmisUiProperties()
+        AmisUiService svc = new AmisUiService(null, null, new ObjectMapper(), null);
+        assertNotNull(svc.getProperties());
+        assertNotNull(svc.getProperties().getApp());
+        // Should not throw — rendering works with defaults
+        String result = svc.renderHtml();
+        assertNotNull(result);
+        assertTrue(result.contains("<!DOCTYPE html"));
     }
 
     @Test
-    void renderHtml_schemaJson_propertiesNull_throwsIllegalState() {
-        AmisUiService svc = new AmisUiService();
-        svc.setObjectMapper(new ObjectMapper());
-        assertThrows(IllegalStateException.class,
-            () -> svc.renderHtml("{\"type\":\"page\"}"));
+    void renderHtml_schemaJson_nullProperties_defaultsAndRenders() {
+        AmisUiService svc = new AmisUiService(null, null, new ObjectMapper(), null);
+        String result = svc.renderHtml("{\"type\":\"page\"}");
+        assertNotNull(result);
+        assertTrue(result.contains("<!doctype html"));
+        assertTrue(result.contains("{\"type\":\"page\"}"));
     }
 
     // --- interceptor exception resilience ---
@@ -87,10 +91,11 @@ class AmisUiServiceUnitTest {
                 throw new RuntimeException("Simulated afterRender failure");
             }
         });
-        service.setExtensionRegistry(registry);
+
+        AmisUiService svc = new AmisUiService(properties, null, new ObjectMapper(), registry);
 
         // Rendering should still succeed despite interceptor exceptions
-        String result = service.renderHtml("{\"type\":\"page\"}");
+        String result = svc.renderHtml("{\"type\":\"page\"}");
         assertNotNull(result);
         assertTrue(result.contains("<!doctype html"));
         assertTrue(result.contains("{\"type\":\"page\"}"));

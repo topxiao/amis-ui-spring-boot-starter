@@ -53,4 +53,14 @@ class AmisUiServiceTest {
         assertThat(properties.getApp().getBrandName()).isEqualTo("Admin");
         assertThat(properties.getApp().getTheme()).isEqualTo("ang");
     }
+
+    @Test
+    void renderHtml_withSchema_shouldReturnValidHtml() {
+        String schemaJson = "{\"type\":\"page\",\"body\":\"Test\"}";
+        String html = amisUiService.renderHtml(schemaJson, "Test Page");
+
+        assertThat(html).contains("<!doctype html>");
+        assertThat(html).contains("<title>Test Page</title>");
+        assertThat(html).contains("Test");
+    }
 }

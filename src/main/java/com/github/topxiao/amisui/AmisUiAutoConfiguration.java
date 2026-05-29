@@ -117,7 +117,7 @@ public class AmisUiAutoConfiguration {
     }
 
     /**
-     * Amis UI Service Bean
+     * Amis UI Service Bean — created via constructor injection.
      */
     @Bean
     @ConditionalOnMissingBean
@@ -125,11 +125,6 @@ public class AmisUiAutoConfiguration {
                                        Environment environment,
                                        ObjectMapper objectMapper,
                                        AmisUiExtensionRegistry extensionRegistry) {
-        AmisUiService service = new AmisUiService();
-        service.setProperties(properties);
-        service.setEnvironment(environment);
-        service.setObjectMapper(objectMapper);
-        service.setExtensionRegistry(extensionRegistry);
-        return service;
+        return new AmisUiService(properties, environment, objectMapper, extensionRegistry);
     }
 }
