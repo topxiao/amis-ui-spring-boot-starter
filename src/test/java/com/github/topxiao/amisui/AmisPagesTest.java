@@ -4,11 +4,11 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class AmisPageFactoryTest {
+class AmisPagesTest {
 
     @Test
     void page_createsPageWithAllFields() {
-        AmisUiProperties.Page page = AmisPageFactory.page(
+        AmisProperties.Page page = AmisPages.page(
             "用户管理", "users", "get:/api/users", "fa-users");
         assertEquals("用户管理", page.getLabel());
         assertEquals("users", page.getUrl());
@@ -20,10 +20,10 @@ class AmisPageFactoryTest {
 
     @Test
     void page_withChildren_createsPageWithChildren() {
-        AmisUiProperties.Page child1 = AmisPageFactory.page("子页1", "c1", "get:/api/c1", null);
-        AmisUiProperties.Page child2 = AmisPageFactory.page("子页2", "c2", "get:/api/c2", null);
-        AmisUiProperties.Page parent = AmisPageFactory.page(
-            "父页", "parent", null, null, AmisPageFactory.children(child1, child2));
+        AmisProperties.Page child1 = AmisPages.page("子页1", "c1", "get:/api/c1", null);
+        AmisProperties.Page child2 = AmisPages.page("子页2", "c2", "get:/api/c2", null);
+        AmisProperties.Page parent = AmisPages.page(
+            "父页", "parent", null, null, AmisPages.children(child1, child2));
 
         assertEquals("父页", parent.getLabel());
         assertEquals(2, parent.getChildren().size());
@@ -32,9 +32,9 @@ class AmisPageFactoryTest {
 
     @Test
     void group_createsPageWithLabelAndChildren() {
-        AmisUiProperties.Page child = AmisPageFactory.page("子页", "c", null, null);
-        AmisUiProperties.Page group = AmisPageFactory.group("分组", "fa-folder",
-            AmisPageFactory.children(child));
+        AmisProperties.Page child = AmisPages.page("子页", "c", null, null);
+        AmisProperties.Page group = AmisPages.group("分组", "fa-folder",
+            AmisPages.children(child));
 
         assertEquals("分组", group.getLabel());
         assertEquals("fa-folder", group.getIcon());
@@ -44,11 +44,11 @@ class AmisPageFactoryTest {
 
     @Test
     void emptyChildren_returnsEmptyArray() {
-        assertEquals(0, AmisPageFactory.emptyChildren().length);
+        assertEquals(0, AmisPages.emptyChildren().length);
     }
 
     @Test
     void children_withNull_returnsEmptyArray() {
-        assertEquals(0, AmisPageFactory.children((AmisUiProperties.Page[]) null).length);
+        assertEquals(0, AmisPages.children((AmisProperties.Page[]) null).length);
     }
 }

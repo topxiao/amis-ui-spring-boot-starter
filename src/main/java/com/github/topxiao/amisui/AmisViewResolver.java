@@ -19,10 +19,10 @@ public class AmisViewResolver implements ViewResolver, Ordered {
 
     private static final String PREFIX = "amis:";
 
-    private final AmisUiService service;
+    private final AmisViewService service;
     private int order = Ordered.HIGHEST_PRECEDENCE;
 
-    public AmisViewResolver(AmisUiService service) {
+    public AmisViewResolver(AmisViewService service) {
         this.service = service;
     }
 

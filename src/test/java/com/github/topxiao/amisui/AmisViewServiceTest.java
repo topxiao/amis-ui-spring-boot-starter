@@ -1,43 +1,37 @@
 package com.github.topxiao.amisui;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.topxiao.amisui.ext.AmisUiExtensionRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Amis UI Service Test
+ * Amis View Service Integration Test
  */
 @SpringBootTest
-class AmisUiServiceTest {
+class AmisViewServiceTest {
 
     @Autowired
-    private AmisUiService amisUiService;
+    private AmisViewService amisViewService;
 
     @Autowired
-    private AmisUiProperties properties;
+    private AmisProperties properties;
 
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
-    private AmisUiExtensionRegistry extensionRegistry;
-
     @Test
     void contextLoads() {
-        assertThat(amisUiService).isNotNull();
+        assertThat(amisViewService).isNotNull();
         assertThat(properties).isNotNull();
         assertThat(objectMapper).isNotNull();
-        assertThat(extensionRegistry).isNotNull();
     }
 
     @Test
     void renderHtml_ShouldReturnValidHtml() {
-        String html = amisUiService.renderHtml();
+        String html = amisViewService.renderHtml();
 
         assertThat(html).isNotNull();
         assertThat(html).contains("<!DOCTYPE html>");
@@ -57,7 +51,7 @@ class AmisUiServiceTest {
     @Test
     void renderHtml_withSchema_shouldReturnValidHtml() {
         String schemaJson = "{\"type\":\"page\",\"body\":\"Test\"}";
-        String html = amisUiService.renderHtml(schemaJson, "Test Page");
+        String html = amisViewService.renderHtml(schemaJson, "Test Page");
 
         assertThat(html).contains("<!doctype html>");
         assertThat(html).contains("<title>Test Page</title>");

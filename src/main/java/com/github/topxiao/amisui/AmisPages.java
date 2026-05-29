@@ -2,21 +2,21 @@ package com.github.topxiao.amisui;
 
 import java.util.List;
 
-public final class AmisPageFactory {
+public final class AmisPages {
 
-    private AmisPageFactory() {
+    private AmisPages() {
     }
 
     /* ========== 普通页面 ========== */
 
-    public static AmisUiProperties.Page page(
+    public static AmisProperties.Page page(
             String title,
             String path,
             String schemaApi,
             String icon,
-            AmisUiProperties.Page[] children
+            AmisProperties.Page[] children
     ) {
-        AmisUiProperties.Page page = new AmisUiProperties.Page();
+        AmisProperties.Page page = new AmisProperties.Page();
         page.setLabel(title);
         page.setUrl(path);
         page.setSchemaApi(schemaApi);
@@ -25,7 +25,7 @@ public final class AmisPageFactory {
         return page;
     }
 
-    public static AmisUiProperties.Page page(
+    public static AmisProperties.Page page(
             String title,
             String path,
             String schemaApi,
@@ -36,12 +36,12 @@ public final class AmisPageFactory {
 
     /* ========== 分组（Group） ========== */
 
-    public static AmisUiProperties.Page group(
+    public static AmisProperties.Page group(
             String title,
             String icon,
-            AmisUiProperties.Page[] children
+            AmisProperties.Page[] children
     ) {
-        AmisUiProperties.Page page = new AmisUiProperties.Page();
+        AmisProperties.Page page = new AmisProperties.Page();
         page.setLabel(title);
         page.setIcon(icon);
         page.setChildren(List.of(children));
@@ -50,11 +50,11 @@ public final class AmisPageFactory {
 
     /* ========== 辅助方法 ========== */
 
-    public static AmisUiProperties.Page[] emptyChildren() {
-        return new AmisUiProperties.Page[0];
+    public static AmisProperties.Page[] emptyChildren() {
+        return new AmisProperties.Page[0];
     }
 
-    public static AmisUiProperties.Page[] children(AmisUiProperties.Page... pages) {
+    public static AmisProperties.Page[] children(AmisProperties.Page... pages) {
         return pages == null ? emptyChildren() : pages;
     }
 }

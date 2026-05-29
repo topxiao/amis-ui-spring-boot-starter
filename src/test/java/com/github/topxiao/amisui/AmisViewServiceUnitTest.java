@@ -1,25 +1,24 @@
 package com.github.topxiao.amisui;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.topxiao.amisui.ext.AmisUiExtensionRegistry;
-import com.github.topxiao.amisui.ext.DefaultAmisUiExtensionRegistry;
-import com.github.topxiao.amisui.ext.AmisUiRenderInterceptor;
+import com.github.topxiao.amisui.ext.AmisRenderContext;
+import com.github.topxiao.amisui.ext.AmisRenderInterceptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Map;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class AmisUiServiceUnitTest {
+class AmisViewServiceUnitTest {
 
-    private AmisUiService service;
-    private AmisUiProperties properties;
+    private AmisViewService service;
+    private AmisProperties properties;
 
     @BeforeEach
     void setUp() {
-        properties = new AmisUiProperties();
-        service = new AmisUiService(properties, null, new ObjectMapper(), null);
+        properties = new AmisProperties();
+        service = new AmisViewService(properties, null, new ObjectMapper(), List.of(), List.of(), List.of());
     }
 
     // --- schemaJson validation ---
@@ -55,8 +54,8 @@ class AmisUiServiceUnitTest {
 
     @Test
     void renderHtml_nullProperties_defaultsToNewProperties() {
-        // Constructor defaults null properties to new AmisUiProperties()
-        AmisUiService svc = new AmisUiService(null, null, new ObjectMapper(), null);
+        // Constructor defaults null properties to new AmisProperties()
+        AmisViewService svc = new AmisViewService(null, null, new ObjectMapper(), List.of(), List.of(), List.of());
         assertNotNull(svc.getProperties());
         assertNotNull(svc.getProperties().getApp());
         // Should not throw — rendering works with defaults
@@ -67,7 +66,7 @@ class AmisUiServiceUnitTest {
 
     @Test
     void renderHtml_schemaJson_nullProperties_defaultsAndRenders() {
-        AmisUiService svc = new AmisUiService(null, null, new ObjectMapper(), null);
+        AmisViewService svc = new AmisViewService(null, null, new ObjectMapper(), List.of(), List.of(), List.of());
         String result = svc.renderHtml("{\"type\":\"page\"}");
         assertNotNull(result);
         assertTrue(result.contains("<!doctype html"));
@@ -78,21 +77,21 @@ class AmisUiServiceUnitTest {
 
     @Test
     void renderHtml_interceptorThrowsException_renderingContinues() {
-        // Register an interceptor that throws in both beforeRender and afterRender
-        AmisUiExtensionRegistry registry = new DefaultAmisUiExtensionRegistry();
-        registry.registerRenderInterceptor(new AmisUiRenderInterceptor() {
+        // Pass an interceptor that throws in both beforeRender and afterRender
+        AmisRenderInterceptor throwingInterceptor = new AmisRenderInterceptor() {
             @Override
-            public void beforeRender(RenderContext context) {
+            public void beforeRender(AmisRenderContext context) {
                 throw new RuntimeException("Simulated beforeRender failure");
             }
 
             @Override
-            public String afterRender(RenderContext context, String html) {
+            public String afterRender(AmisRenderContext context, String html) {
                 throw new RuntimeException("Simulated afterRender failure");
             }
-        });
+        };
 
-        AmisUiService svc = new AmisUiService(properties, null, new ObjectMapper(), registry);
+        AmisViewService svc = new AmisViewService(properties, null, new ObjectMapper(),
+                List.of(), List.of(), List.of(throwingInterceptor));
 
         // Rendering should still succeed despite interceptor exceptions
         String result = svc.renderHtml("{\"type\":\"page\"}");

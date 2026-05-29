@@ -1,11 +1,11 @@
 package com.github.topxiao.amisui;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.topxiao.amisui.ext.DefaultAmisUiExtensionRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.Ordered;
 
+import java.util.List;
 import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -16,11 +16,10 @@ class AmisViewResolverTest {
 
     @BeforeEach
     void setUp() {
-        AmisUiProperties props = new AmisUiProperties();
+        AmisProperties props = new AmisProperties();
         ObjectMapper mapper = new ObjectMapper();
         var env = new org.springframework.mock.env.MockEnvironment();
-        var registry = new DefaultAmisUiExtensionRegistry();
-        AmisUiService service = new AmisUiService(props, env, mapper, registry);
+        AmisViewService service = new AmisViewService(props, env, mapper, List.of(), List.of(), List.of());
         resolver = new AmisViewResolver(service);
     }
 

@@ -1,8 +1,8 @@
 package com.github.topxiao.amisui;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.github.topxiao.amisui.ext.AmisUiRenderInterceptor;
-import com.github.topxiao.amisui.ext.AmisUiRenderInterceptor.RenderContext;
+import com.github.topxiao.amisui.ext.AmisRenderContext;
+import com.github.topxiao.amisui.ext.AmisRenderInterceptor;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.env.Environment;
@@ -22,7 +22,7 @@ import java.util.Optional;
  *   <li><b>Schema mode</b> (appMode=false): renders a single amis schema page,
  *       expects a {@code schema} attribute in the model.</li>
  *   <li><b>App mode</b> (appMode=true): renders a full amis app with multi-page
- *       navigation, driven by the configured pages in {@link AmisUiProperties}.</li>
+ *       navigation, driven by the configured pages in {@link AmisProperties}.</li>
  * </ul>
  */
 public class AmisView implements View {
@@ -30,16 +30,16 @@ public class AmisView implements View {
     private static final String DEFAULT_TITLE = "AMIS Page";
     private static final String DEFAULT_THEME = "ang";
 
-    private final AmisUiService service;
+    private final AmisViewService service;
     private final boolean appMode;
 
     /**
      * Create a new AmisView.
      *
-     * @param service the AmisUiService providing context building methods
+     * @param service the AmisViewService providing context building methods
      * @param appMode true for app mode (multi-page), false for schema mode (single page)
      */
-    public AmisView(AmisUiService service, boolean appMode) {
+    public AmisView(AmisViewService service, boolean appMode) {
         this.service = service;
         this.appMode = appMode;
     }
@@ -67,7 +67,7 @@ public class AmisView implements View {
 
     /**
      * Render the amis page to an HTML string.
-     * Package-private for use by {@link AmisUiService} backward compatibility.
+     * Package-private for use by {@link AmisViewService} backward compatibility.
      *
      * @param model the model map containing rendering attributes
      * @return the rendered HTML string
@@ -108,7 +108,7 @@ public class AmisView implements View {
         String schemaJson = resolveSchemaJson(schema);
 
         // Apply properties customizers
-        AmisUiProperties customizedProperties = service.applyPropertiesCustomizers();
+        AmisProperties customizedProperties = service.applyPropertiesCustomizers();
 
         // Resolve template variables from model overrides or defaults
         String title = getStringOrDefault(model, "title", DEFAULT_TITLE);
@@ -129,7 +129,7 @@ public class AmisView implements View {
                 .replace("${customJs}", customJs);
 
         // Apply after-render interceptors
-        RenderContext context = new RenderContext(model, "schema");
+        AmisRenderContext context = new AmisRenderContext(model, "schema");
         html = service.invokeAfterRenderInterceptors(context, html);
 
         return html;
@@ -142,16 +142,16 @@ public class AmisView implements View {
     /**
      * Render in app (multi-page) mode.
      * <p>
-     * Uses pages configured in {@link AmisUiProperties}, invokes
+     * Uses pages configured in {@link AmisProperties}, invokes
      * before-render interceptors before building context, and
      * after-render interceptors after HTML generation.
      */
     private String renderAppMode(Map<String, Object> model) {
         // Apply properties customizers
-        AmisUiProperties customizedProperties = service.applyPropertiesCustomizers();
+        AmisProperties customizedProperties = service.applyPropertiesCustomizers();
 
         // Before-render interceptors
-        RenderContext context = new RenderContext(model, "app");
+        AmisRenderContext context = new AmisRenderContext(model, "app");
         service.invokeBeforeRenderInterceptors(context);
 
         // Build app configuration
@@ -161,15 +161,6 @@ public class AmisView implements View {
         String ctx = resolveCtx(customizedProperties);
         String theme = resolveTheme(customizedProperties);
         String version = customizedProperties.getVersion();
-        String apiHost = Optional.ofNullable(customizedProperties.getApiHost())
-                .filter(StringUtils::hasText)
-                .orElse("");
-        String customCss = Optional.ofNullable(customizedProperties.getCustomCss())
-                .filter(StringUtils::hasText)
-                .orElse("");
-        String customJs = Optional.ofNullable(customizedProperties.getCustomJs())
-                .filter(StringUtils::hasText)
-                .orElse("");
         String title = customizedProperties.getApp().getTitle();
 
         // Serialize app config to JSON
@@ -184,12 +175,12 @@ public class AmisView implements View {
         String html = getHtmlTemplate()
                 .replace("${title}", title)
                 .replace("${version}", version)
-                .replace("${apiHost}", apiHost)
+                .replace("${apiHost}", "")
                 .replace("${appJson}", appJson)
                 .replace("${ctx}", ctx)
                 .replace("${theme}", theme)
-                .replace("${customCss}", customCss)
-                .replace("${customJs}", customJs);
+                .replace("${customCss}", "")
+                .replace("${customJs}", "");
 
         // After-render interceptors
         html = service.invokeAfterRenderInterceptors(context, html);
@@ -204,7 +195,7 @@ public class AmisView implements View {
     /**
      * Resolve context path: from customizedProperties, or fall back to environment.
      */
-    private String resolveCtx(AmisUiProperties customizedProperties) {
+    private String resolveCtx(AmisProperties customizedProperties) {
         return Optional.ofNullable(customizedProperties.getCtx())
                 .filter(StringUtils::hasText)
                 .orElseGet(() -> {
@@ -216,7 +207,7 @@ public class AmisView implements View {
     /**
      * Resolve theme: from customizedProperties, or fall back to default "ang".
      */
-    private String resolveTheme(AmisUiProperties customizedProperties) {
+    private String resolveTheme(AmisProperties customizedProperties) {
         return Optional.ofNullable(customizedProperties.getApp().getTheme())
                 .filter(StringUtils::hasText)
                 .orElse(DEFAULT_THEME);
@@ -260,12 +251,11 @@ public class AmisView implements View {
     }
 
     // -------------------------------------------------------------------------
-    // Templates (copied verbatim from AmisUiService)
+    // Templates
     // -------------------------------------------------------------------------
 
     /**
      * HTML template for app mode (multi-page with navigation).
-     * Same as {@code AmisUiService.getHtmlTemplate()}.
      */
     private String getHtmlTemplate() {
         return """
@@ -436,7 +426,6 @@ public class AmisView implements View {
 
     /**
      * HTML template for schema mode (single-page).
-     * Same as {@code AmisUiService.getSchemaPageTemplate()}.
      */
     private String getSchemaPageTemplate() {
         return """

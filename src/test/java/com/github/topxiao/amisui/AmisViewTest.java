@@ -1,10 +1,8 @@
 package com.github.topxiao.amisui;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.topxiao.amisui.ext.AmisUiExtensionRegistry;
-import com.github.topxiao.amisui.ext.AmisUiRenderInterceptor;
-import com.github.topxiao.amisui.ext.AmisUiRenderInterceptor.RenderContext;
-import com.github.topxiao.amisui.ext.DefaultAmisUiExtensionRegistry;
+import com.github.topxiao.amisui.ext.AmisRenderContext;
+import com.github.topxiao.amisui.ext.AmisRenderInterceptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -12,19 +10,20 @@ import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.*;
 
 class AmisViewTest {
 
-    private AmisUiService service;
-    private AmisUiProperties properties;
+    private AmisViewService service;
+    private AmisProperties properties;
 
     @BeforeEach
     void setUp() {
-        properties = new AmisUiProperties();
-        service = new AmisUiService(properties, null, new ObjectMapper(), null);
+        properties = new AmisProperties();
+        service = new AmisViewService(properties, null, new ObjectMapper(), List.of(), List.of(), List.of());
     }
 
     // -------------------------------------------------------------------------
@@ -141,18 +140,18 @@ class AmisViewTest {
 
     @Test
     void schemaMode_renderInterceptor_applied() {
-        // Register an after-render interceptor that modifies the output
-        AmisUiExtensionRegistry registry = new DefaultAmisUiExtensionRegistry();
-        registry.registerRenderInterceptor(new AmisUiRenderInterceptor() {
+        // Pass an after-render interceptor that modifies the output
+        AmisRenderInterceptor interceptor = new AmisRenderInterceptor() {
             @Override
-            public String afterRender(RenderContext context, String html) {
+            public String afterRender(AmisRenderContext context, String html) {
                 return html.replace("</html>", "<!-- intercepted --></html>");
             }
-        });
-        // Recreate service with the registry
-        AmisUiService svcWithRegistry = new AmisUiService(properties, null, new ObjectMapper(), registry);
+        };
+        // Recreate service with the interceptor
+        AmisViewService svcWithInterceptor = new AmisViewService(properties, null, new ObjectMapper(),
+                List.of(), List.of(), List.of(interceptor));
 
-        AmisView view = new AmisView(svcWithRegistry, false);
+        AmisView view = new AmisView(svcWithInterceptor, false);
         Map<String, Object> model = new HashMap<>();
         model.put("schema", "{\"type\":\"page\"}");
 
