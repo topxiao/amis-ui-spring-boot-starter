@@ -9,14 +9,23 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Amis view resolver that resolves {@code amis:} prefixed view names.
+ * 解析 {@code amis:} 前缀视图名的 ViewResolver。
  * <p>
- * Resolution rules:
+ * 解析流程：所有名称（包括 "app"）统一通过 {@link AmisSchemaProvider} chain 解析，
+ * 按顺序调用，第一个返回非 null 结果的 provider 生效。
+ * <p>
+ * 渲染模板由视图名称决定，与数据来源无关：
  * <ul>
- *   <li>{@code amis:app} → app mode (full multi-page framework)</li>
- *   <li>{@code amis:xxx} → iterates {@link AmisSchemaProvider} chain;
- *       first non-null result renders as schema page</li>
+ *   <li>{@code amis:app} → 使用多页面框架模板（hash 路由、导航栏）</li>
+ *   <li>{@code amis:xxx} → 使用单页面 Schema 模板</li>
  * </ul>
+ *
+ * <pre>
+ * 示例：
+ *   amis:app     → provider chain 解析 "app" → ClasspathAmisSchemaProvider 或 PropertiesAppSchemaProvider
+ *   amis:users   → provider chain 解析 "users" → ClasspathAmisSchemaProvider 加载 users.json
+ *   amis:unknown → chain 中无匹配 → 返回 null，交给下一个 ViewResolver
+ * </pre>
  */
 public class AmisViewResolver implements ViewResolver, Ordered {
 
@@ -40,6 +49,12 @@ public class AmisViewResolver implements ViewResolver, Ordered {
         return order;
     }
 
+    /**
+     * 解析视图名。仅处理 {@code "amis:"} 前缀的名称。
+     * <p>
+     * 遍历 provider chain，第一个返回非 null 的 schema 作为渲染数据。
+     * "app" 名称使用 appMode 模板，其余使用 schema 模板。
+     */
     @Override
     public View resolveViewName(String viewName, Locale locale) {
         if (viewName == null || !viewName.startsWith(PREFIX)) {
@@ -48,14 +63,10 @@ public class AmisViewResolver implements ViewResolver, Ordered {
 
         String name = viewName.substring(PREFIX.length());
 
-        if ("app".equals(name)) {
-            return new AmisView(service, true);
-        }
-
         for (AmisSchemaProvider provider : providers) {
             String schema = provider.resolveSchema(name);
             if (schema != null) {
-                return new AmisView(service, false, schema);
+                return new AmisView(service, "app".equals(name), schema);
             }
         }
 

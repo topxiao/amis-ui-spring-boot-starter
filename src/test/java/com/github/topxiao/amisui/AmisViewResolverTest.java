@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.Ordered;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
@@ -15,6 +16,7 @@ class AmisViewResolverTest {
 
     private AmisViewResolver resolver;
     private AmisViewService service;
+    private AmisSchemaProvider appProvider;
 
     @BeforeEach
     void setUp() {
@@ -22,7 +24,15 @@ class AmisViewResolverTest {
         ObjectMapper mapper = new ObjectMapper();
         var env = new org.springframework.mock.env.MockEnvironment();
         service = new AmisViewService(props, env, mapper, List.of(), List.of(), List.of());
-        resolver = new AmisViewResolver(service, List.of());
+
+        appProvider = new AmisSchemaProvider() {
+            @Override
+            public String resolveSchema(String name) {
+                if (!"app".equals(name)) return null;
+                return "{\"type\":\"app\"}";
+            }
+        };
+        resolver = new AmisViewResolver(service, List.of(appProvider));
     }
 
     @Test
@@ -34,9 +44,36 @@ class AmisViewResolverTest {
     }
 
     @Test
+    void resolveViewName_amisApp_customProvider_usedInTemplate() {
+        AmisSchemaProvider customApp = name -> "app".equals(name)
+                ? "{\"type\":\"app\",\"brandName\":\"Custom\"}" : null;
+        resolver = new AmisViewResolver(service, List.of(customApp));
+
+        var view = resolver.resolveViewName("amis:app", Locale.getDefault());
+
+        assertThat(view).isInstanceOf(AmisView.class);
+        String html = ((AmisView) view).renderToString(new HashMap<>());
+        assertThat(html).contains("Custom");
+    }
+
+    @Test
+    void resolveViewName_amisApp_classpathOverridesProperties() {
+        AmisSchemaProvider classpathProvider = name -> "app".equals(name)
+                ? "{\"type\":\"app\",\"brandName\":\"FromClasspath\"}" : null;
+        AmisSchemaProvider propertiesProvider = name -> "app".equals(name)
+                ? "{\"type\":\"app\",\"brandName\":\"FromProperties\"}" : null;
+
+        resolver = new AmisViewResolver(service, List.of(classpathProvider, propertiesProvider));
+        var view = resolver.resolveViewName("amis:app", Locale.getDefault());
+
+        String html = ((AmisView) view).renderToString(new HashMap<>());
+        assertThat(html).contains("FromClasspath");
+    }
+
+    @Test
     void resolveViewName_providerReturnsSchema_returnsSchemaModeView() {
         AmisSchemaProvider provider = name -> "users".equals(name) ? "{\"type\":\"page\"}" : null;
-        resolver = new AmisViewResolver(service, List.of(provider));
+        resolver = new AmisViewResolver(service, List.of(appProvider, provider));
 
         var view = resolver.resolveViewName("amis:users", Locale.getDefault());
 
@@ -72,12 +109,12 @@ class AmisViewResolverTest {
     void resolveViewName_multipleProviders_firstWins() {
         AmisSchemaProvider first = name -> "page1".equals(name) ? "{\"first\":true}" : null;
         AmisSchemaProvider second = name -> "page1".equals(name) ? "{\"second\":true}" : null;
-        resolver = new AmisViewResolver(service, List.of(first, second));
+        resolver = new AmisViewResolver(service, List.of(appProvider, first, second));
 
         var view = resolver.resolveViewName("amis:page1", Locale.getDefault());
 
         assertThat(view).isNotNull();
-        String html = ((AmisView) view).renderToString(new java.util.HashMap<>());
+        String html = ((AmisView) view).renderToString(new HashMap<>());
         assertThat(html).contains("\"first\":true");
     }
 
@@ -85,12 +122,12 @@ class AmisViewResolverTest {
     void resolveViewName_multipleProviders_fallback() {
         AmisSchemaProvider first = name -> null;
         AmisSchemaProvider second = name -> "page2".equals(name) ? "{\"second\":true}" : null;
-        resolver = new AmisViewResolver(service, List.of(first, second));
+        resolver = new AmisViewResolver(service, List.of(appProvider, first, second));
 
         var view = resolver.resolveViewName("amis:page2", Locale.getDefault());
 
         assertThat(view).isNotNull();
-        String html = ((AmisView) view).renderToString(new java.util.HashMap<>());
+        String html = ((AmisView) view).renderToString(new HashMap<>());
         assertThat(html).contains("\"second\":true");
     }
 

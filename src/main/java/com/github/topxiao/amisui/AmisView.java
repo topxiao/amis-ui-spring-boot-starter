@@ -2,7 +2,6 @@ package com.github.topxiao.amisui;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.topxiao.amisui.ext.AmisRenderContext;
-import com.github.topxiao.amisui.ext.AmisRenderInterceptor;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.env.Environment;
@@ -15,15 +14,16 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Spring MVC {@link View} that renders amis HTML pages.
+ * Amis HTML 页面渲染 View。
  * <p>
- * Supports two rendering modes:
+ * 支持两种渲染模式：
  * <ul>
- *   <li><b>Schema mode</b> (appMode=false): renders a single amis schema page,
- *       expects a {@code schema} attribute in the model.</li>
- *   <li><b>App mode</b> (appMode=true): renders a full amis app with multi-page
- *       navigation, driven by the configured pages in {@link AmisProperties}.</li>
+ *   <li><b>Schema 模式</b> (appMode=false)：渲染单页面 amis 视图，
+ *       从 model 的 {@code schema} 属性或 preloadedSchema 获取 JSON。</li>
+ *   <li><b>App 模式</b> (appMode=true)：渲染多页面 amis 框架，
+ *       包含 hash 路由、导航栏，从 AmisProperties 构建 app 配置。</li>
  * </ul>
+ * 渲染模式由 {@link AmisViewResolver} 根据视图名称决定："app" 使用 App 模式，其余使用 Schema 模式。
  */
 public class AmisView implements View {
 
@@ -278,13 +278,25 @@ public class AmisView implements View {
     // @formatter:on
 
     private final AmisViewService service;
+    /**
+     * true=多页面框架模板(APP_TEMPLATE)，false=单页面模板(SCHEMA_TEMPLATE)
+     */
     private final boolean appMode;
+    /**
+     * 预加载的 Schema JSON，由 AmisViewResolver 通过 provider chain 预先解析好
+     */
     private final String preloadedSchema;
 
+    /**
+     * 自行构建 Schema 的构造函数（AmisViewService.renderHtml 使用）
+     */
     public AmisView(AmisViewService service, boolean appMode) {
         this(service, appMode, null);
     }
 
+    /**
+     * 预加载 Schema 的构造函数（AmisViewResolver 使用）
+     */
     public AmisView(AmisViewService service, boolean appMode, String preloadedSchema) {
         this.service = service;
         this.appMode = appMode;
@@ -352,13 +364,15 @@ public class AmisView implements View {
         AmisRenderContext context = new AmisRenderContext(model, "app");
         service.invokeBeforeRenderInterceptors(context);
 
-        Map<String, Object> appConfig = service.buildAppConfig(props);
-
         String appJson;
-        try {
-            appJson = service.getObjectMapper().writeValueAsString(appConfig);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to serialize app configuration", e);
+        if (preloadedSchema != null) {
+            appJson = preloadedSchema;
+        } else {
+            try {
+                appJson = service.getObjectMapper().writeValueAsString(service.buildAppConfig(props));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Failed to serialize app configuration", e);
+            }
         }
 
         String html = APP_TEMPLATE

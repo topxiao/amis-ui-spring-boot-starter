@@ -15,10 +15,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Core service for Amis view rendering.
+ * Amis 渲染核心服务。
  * <p>
- * Collects extensions via Spring constructor injection and delegates
- * rendering to {@link AmisView}.
+ * 收集所有扩展点（PropertiesCustomizer、PageCustomizer、RenderInterceptor），
+ * 提供 HTML 渲染和 app 配置构建能力。实际渲染委托给 {@link AmisView}。
  */
 public class AmisViewService {
 
@@ -62,31 +62,49 @@ public class AmisViewService {
         return environment;
     }
 
+    /**
+     * 获取 ObjectMapper（包内可见，供 AmisView 和 PropertiesAppSchemaProvider 使用）
+     */
     ObjectMapper getObjectMapper() {
         return objectMapper;
     }
 
     // -------------------------------------------------------------------------
-    // Rendering — delegates to AmisView
+    // Rendering — 委托给 AmisView
     // -------------------------------------------------------------------------
 
+    /**
+     * 渲染 app 模式 HTML（无自定义数据）
+     */
     public String renderHtml() {
         return renderHtml(new HashMap<>());
     }
 
+    /**
+     * 渲染 app 模式 HTML（带自定义数据）
+     */
     public String renderHtml(Map<String, Object> customData) {
         AmisView view = new AmisView(this, true);
         return view.renderToString(customData);
     }
 
+    /**
+     * 渲染 schema 模式 HTML（仅 schema JSON）
+     */
     public String renderHtml(String schemaJson) {
         return renderHtml(schemaJson, "AMIS Page", null, null);
     }
 
+    /**
+     * 渲染 schema 模式 HTML（schema + 标题）
+     */
     public String renderHtml(String schemaJson, String title) {
         return renderHtml(schemaJson, title, null, null);
     }
 
+    /**
+     * 渲染 schema 模式 HTML（完整参数）
+     */
     public String renderHtml(String schemaJson, String title, String customCss, String customJs) {
         Map<String, Object> model = new HashMap<>();
         model.put("schema", schemaJson != null ? schemaJson : "{}");
@@ -101,6 +119,9 @@ public class AmisViewService {
     // Extension / interceptor support
     // -------------------------------------------------------------------------
 
+    /**
+     * 依次执行所有 PropertiesCustomizer，返回最终配置
+     */
     public AmisProperties applyPropertiesCustomizers() {
         AmisProperties result = properties;
         for (AmisPropertiesCustomizer customizer : propertiesCustomizers) {
@@ -109,6 +130,9 @@ public class AmisViewService {
         return result;
     }
 
+    /**
+     * 触发所有拦截器的 beforeRender 回调
+     */
     public void invokeBeforeRenderInterceptors(AmisRenderContext context) {
         for (AmisRenderInterceptor interceptor : renderInterceptors) {
             try {
@@ -120,6 +144,9 @@ public class AmisViewService {
         }
     }
 
+    /**
+     * 触发所有拦截器的 afterRender 回调，逐个修改 HTML
+     */
     public String invokeAfterRenderInterceptors(AmisRenderContext context, String html) {
         String result = html;
         for (AmisRenderInterceptor interceptor : renderInterceptors) {
@@ -137,6 +164,16 @@ public class AmisViewService {
     // App configuration building
     // -------------------------------------------------------------------------
 
+    /**
+     * 根据 AmisProperties 构建 amis app 配置 Map。
+     * <p>
+     * 输出结构：
+     * <pre>{ type, brandName, logo, header?, pages? }</pre>
+     * 页面列表会经过所有 {@link AmisPageCustomizer} 处理后再转换为 Map。
+     *
+     * @param customizedProperties 经过 Customizer 处理后的配置
+     * @return app 配置 Map，供序列化为 JSON
+     */
     public Map<String, Object> buildAppConfig(AmisProperties customizedProperties) {
         Map<String, Object> app = new HashMap<>();
         app.put("type", "app");
@@ -181,6 +218,9 @@ public class AmisViewService {
         return app;
     }
 
+    /**
+     * 将 Page 对象转换为 amis 需要的 Map 结构（仅包含非空字段）
+     */
     private Map<String, Object> convertPage(AmisProperties.Page page) {
         Map<String, Object> pageMap = new HashMap<>();
         if (StringUtils.hasText(page.getLabel())) {
