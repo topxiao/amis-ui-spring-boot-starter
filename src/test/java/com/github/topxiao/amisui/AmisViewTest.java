@@ -165,6 +165,42 @@ class AmisViewTest {
     // -------------------------------------------------------------------------
 
     @Test
+    void schemaMode_preloadedSchema_usedInsteadOfModel() {
+        String preloaded = "{\"type\":\"page\",\"title\":\"Preloaded\"}";
+        AmisView view = new AmisView(service, false, preloaded);
+        Map<String, Object> model = new HashMap<>();
+        // model has no "schema" key — preloadedSchema should be used
+
+        String html = view.renderToString(model);
+
+        assertThat(html).contains("\"title\":\"Preloaded\"");
+    }
+
+    @Test
+    void schemaMode_preloadedSchema_overridesModelSchema() {
+        String preloaded = "{\"type\":\"page\",\"title\":\"Preloaded\"}";
+        AmisView view = new AmisView(service, false, preloaded);
+        Map<String, Object> model = new HashMap<>();
+        model.put("schema", "{\"type\":\"page\",\"title\":\"FromModel\"}");
+
+        String html = view.renderToString(model);
+
+        assertThat(html).contains("\"title\":\"Preloaded\"");
+        assertThat(html).doesNotContain("\"title\":\"FromModel\"");
+    }
+
+    @Test
+    void schemaMode_nullPreloaded_fallsBackToModel() {
+        AmisView view = new AmisView(service, false, null);
+        Map<String, Object> model = new HashMap<>();
+        model.put("schema", "{\"type\":\"page\",\"title\":\"FromModel\"}");
+
+        String html = view.renderToString(model);
+
+        assertThat(html).contains("\"title\":\"FromModel\"");
+    }
+
+    @Test
     void renderToString_returnsHtmlString() throws UnsupportedEncodingException {
         AmisView view = new AmisView(service, false);
         Map<String, Object> model = new HashMap<>();

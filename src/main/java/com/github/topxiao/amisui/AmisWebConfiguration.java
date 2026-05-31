@@ -1,9 +1,12 @@
 package com.github.topxiao.amisui;
 
+import com.github.topxiao.amisui.ext.AmisSchemaProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.lang.Nullable;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import java.util.List;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -30,7 +33,8 @@ public class AmisWebConfiguration implements WebMvcConfigurer {
     }
 
     @Bean
-    public AmisViewResolver amisViewResolver(AmisViewService viewService) {
-        return new AmisViewResolver(viewService);
+    public AmisViewResolver amisViewResolver(AmisViewService viewService,
+                                              @Nullable List<AmisSchemaProvider> providers) {
+        return new AmisViewResolver(viewService, providers);
     }
 }

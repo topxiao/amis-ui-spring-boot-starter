@@ -1,29 +1,34 @@
 package com.github.topxiao.amisui;
 
+import com.github.topxiao.amisui.ext.AmisSchemaProvider;
 import org.springframework.core.Ordered;
 import org.springframework.web.servlet.View;
 import org.springframework.web.servlet.ViewResolver;
 
+import java.util.List;
 import java.util.Locale;
 
 /**
- * Amis 自定义视图解析器，解析 amis: 前缀的视图名。
+ * Amis view resolver that resolves {@code amis:} prefixed view names.
  * <p>
- * 支持：
- * - amis:app → app 模式（完整应用框架）
- * - amis:page → schema 单页模式
- * <p>
- * 其他视图名返回 null，交给下一个 ViewResolver 处理。
+ * Resolution rules:
+ * <ul>
+ *   <li>{@code amis:app} → app mode (full multi-page framework)</li>
+ *   <li>{@code amis:xxx} → iterates {@link AmisSchemaProvider} chain;
+ *       first non-null result renders as schema page</li>
+ * </ul>
  */
 public class AmisViewResolver implements ViewResolver, Ordered {
 
     private static final String PREFIX = "amis:";
 
     private final AmisViewService service;
+    private final List<AmisSchemaProvider> providers;
     private int order = Ordered.HIGHEST_PRECEDENCE;
 
-    public AmisViewResolver(AmisViewService service) {
+    public AmisViewResolver(AmisViewService service, List<AmisSchemaProvider> providers) {
         this.service = service;
+        this.providers = providers != null ? providers : List.of();
     }
 
     public void setOrder(int order) {
@@ -41,11 +46,19 @@ public class AmisViewResolver implements ViewResolver, Ordered {
             return null;
         }
 
-        String mode = viewName.substring(PREFIX.length());
-        return switch (mode) {
-            case "app" -> new AmisView(service, true);
-            case "page" -> new AmisView(service, false);
-            default -> null;
-        };
+        String name = viewName.substring(PREFIX.length());
+
+        if ("app".equals(name)) {
+            return new AmisView(service, true);
+        }
+
+        for (AmisSchemaProvider provider : providers) {
+            String schema = provider.resolveSchema(name);
+            if (schema != null) {
+                return new AmisView(service, false, schema);
+            }
+        }
+
+        return null;
     }
 }

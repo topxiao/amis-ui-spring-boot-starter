@@ -15,6 +15,8 @@ public class AmisProperties {
     private App app = new App();
     private List<Page> pages;
     private String path = "/amis";
+    private String schemaPrefix = "classpath:amis/";
+    private boolean cacheEnabled = true;
 
     private static final Pattern SAFE_PATH_PATTERN = Pattern.compile("^[a-zA-Z0-9._\\-]+$");
     private static final Pattern SAFE_CTX_PATTERN = Pattern.compile("^/[a-zA-Z0-9/._\\-]*$");
@@ -52,6 +54,11 @@ public class AmisProperties {
 
     public String getPath() { return path; }
     public void setPath(String path) { this.path = path; }
+
+    public String getSchemaPrefix() { return schemaPrefix; }
+    public void setSchemaPrefix(String schemaPrefix) { this.schemaPrefix = schemaPrefix; }
+    public boolean isCacheEnabled() { return cacheEnabled; }
+    public void setCacheEnabled(boolean cacheEnabled) { this.cacheEnabled = cacheEnabled; }
 
     public static class App {
         private String brandName = "Admin";

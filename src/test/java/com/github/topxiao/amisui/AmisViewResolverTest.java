@@ -1,6 +1,7 @@
 package com.github.topxiao.amisui;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.topxiao.amisui.ext.AmisSchemaProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.Ordered;
@@ -13,22 +14,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AmisViewResolverTest {
 
     private AmisViewResolver resolver;
+    private AmisViewService service;
 
     @BeforeEach
     void setUp() {
         AmisProperties props = new AmisProperties();
         ObjectMapper mapper = new ObjectMapper();
         var env = new org.springframework.mock.env.MockEnvironment();
-        AmisViewService service = new AmisViewService(props, env, mapper, List.of(), List.of(), List.of());
-        resolver = new AmisViewResolver(service);
-    }
-
-    @Test
-    void resolveViewName_amisPage_returnsAmisViewSchemaMode() {
-        var view = resolver.resolveViewName("amis:page", Locale.getDefault());
-
-        assertThat(view).isInstanceOf(AmisView.class);
-        assertThat(((AmisView) view).isAppMode()).isFalse();
+        service = new AmisViewService(props, env, mapper, List.of(), List.of(), List.of());
+        resolver = new AmisViewResolver(service, List.of());
     }
 
     @Test
@@ -37,6 +31,27 @@ class AmisViewResolverTest {
 
         assertThat(view).isInstanceOf(AmisView.class);
         assertThat(((AmisView) view).isAppMode()).isTrue();
+    }
+
+    @Test
+    void resolveViewName_providerReturnsSchema_returnsSchemaModeView() {
+        AmisSchemaProvider provider = name -> "users".equals(name) ? "{\"type\":\"page\"}" : null;
+        resolver = new AmisViewResolver(service, List.of(provider));
+
+        var view = resolver.resolveViewName("amis:users", Locale.getDefault());
+
+        assertThat(view).isInstanceOf(AmisView.class);
+        assertThat(((AmisView) view).isAppMode()).isFalse();
+    }
+
+    @Test
+    void resolveViewName_allProvidersNull_returnsNull() {
+        AmisSchemaProvider provider = name -> null;
+        resolver = new AmisViewResolver(service, List.of(provider));
+
+        var view = resolver.resolveViewName("amis:unknown", Locale.getDefault());
+
+        assertThat(view).isNull();
     }
 
     @Test
@@ -54,8 +69,36 @@ class AmisViewResolverTest {
     }
 
     @Test
-    void resolveViewName_amisUnknown_returnsNull() {
-        var view = resolver.resolveViewName("amis:unknown", Locale.getDefault());
+    void resolveViewName_multipleProviders_firstWins() {
+        AmisSchemaProvider first = name -> "page1".equals(name) ? "{\"first\":true}" : null;
+        AmisSchemaProvider second = name -> "page1".equals(name) ? "{\"second\":true}" : null;
+        resolver = new AmisViewResolver(service, List.of(first, second));
+
+        var view = resolver.resolveViewName("amis:page1", Locale.getDefault());
+
+        assertThat(view).isNotNull();
+        String html = ((AmisView) view).renderToString(new java.util.HashMap<>());
+        assertThat(html).contains("\"first\":true");
+    }
+
+    @Test
+    void resolveViewName_multipleProviders_fallback() {
+        AmisSchemaProvider first = name -> null;
+        AmisSchemaProvider second = name -> "page2".equals(name) ? "{\"second\":true}" : null;
+        resolver = new AmisViewResolver(service, List.of(first, second));
+
+        var view = resolver.resolveViewName("amis:page2", Locale.getDefault());
+
+        assertThat(view).isNotNull();
+        String html = ((AmisView) view).renderToString(new java.util.HashMap<>());
+        assertThat(html).contains("\"second\":true");
+    }
+
+    @Test
+    void resolveViewName_noProviders_returnsNull() {
+        resolver = new AmisViewResolver(service, List.of());
+
+        var view = resolver.resolveViewName("amis:users", Locale.getDefault());
 
         assertThat(view).isNull();
     }

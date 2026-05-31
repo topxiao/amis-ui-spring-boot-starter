@@ -279,10 +279,16 @@ public class AmisView implements View {
 
     private final AmisViewService service;
     private final boolean appMode;
+    private final String preloadedSchema;
 
     public AmisView(AmisViewService service, boolean appMode) {
+        this(service, appMode, null);
+    }
+
+    public AmisView(AmisViewService service, boolean appMode, String preloadedSchema) {
         this.service = service;
         this.appMode = appMode;
+        this.preloadedSchema = preloadedSchema;
     }
 
     @Override
@@ -315,7 +321,7 @@ public class AmisView implements View {
     // -------------------------------------------------------------------------
 
     private String renderSchemaMode(Map<String, Object> model) {
-        Object schema = model.get("schema");
+        Object schema = preloadedSchema != null ? preloadedSchema : model.get("schema");
         if (schema == null) {
             throw new IllegalArgumentException("schema attribute is required for amis:page view");
         }
