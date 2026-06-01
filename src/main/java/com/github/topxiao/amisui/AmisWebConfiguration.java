@@ -53,4 +53,9 @@ public class AmisWebConfiguration implements WebMvcConfigurer {
                                              @Nullable List<AmisSchemaProvider> providers) {
         return new AmisViewResolver(viewService, providers);
     }
+
+    @Bean
+    public JsonViewResolver jsonViewResolver(@Nullable List<AmisSchemaProvider> providers) {
+        return new JsonViewResolver(providers);
+    }
 }
