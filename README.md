@@ -20,7 +20,7 @@ Spring Boot 3 Starter，用于快速集成 [Amis](https://aisuda.bce.baidu.com/a
 <dependency>
     <groupId>com.github.topxiao</groupId>
     <artifactId>amis-ui-spring-boot-starter</artifactId>
-    <version>0.0.1</version>
+    <version>1.1.0</version>
 </dependency>
 ```
 
