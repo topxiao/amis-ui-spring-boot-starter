@@ -294,7 +294,11 @@ public ResponseEntity<String> appWithData() {
 
 ## 7. Spring MVC 视图名渲染
 
-Starter 注册了 `AmisViewResolver`，解析 `amis:` 前缀视图名。所有名称统一通过 `AmisSchemaProvider` chain 解析。
+Starter 注册了 `AmisViewResolver` 和 `JsonViewResolver`，分别解析 `amis:` 和 `json:` 前缀视图名。
+
+### amis: 前缀 — HTML 页面
+
+所有名称统一通过 `AmisSchemaProvider` chain 解析，渲染为完整 HTML 页面。
 
 ```java
 @Controller
@@ -320,6 +324,46 @@ public class ViewController {
         return new ModelAndView("amis:runtime-info", Map.of("title", "运行时信息"));
     }
 }
+```
+
+### json: 前缀 — 原始 JSON 响应
+
+`JsonViewResolver` 通过 `AmisSchemaProvider` chain 加载 .json 文件，直接以 `application/json` 返回（不嵌入 HTML）。
+
+```java
+@Controller
+public class SchemaController {
+
+    // json:users → 加载 classpath:amis/users.json → 返回原始 JSON
+    @GetMapping("/api/schema/{name}")
+    public String schema(@PathVariable String name) {
+        return "json:" + name;
+    }
+
+    // 支持子目录：json:admin/roles → 加载 classpath:amis/admin/roles.json
+    @GetMapping("/api/schema/admin/{name}")
+    public String adminSchema(@PathVariable String name) {
+        return "json:admin/" + name;
+    }
+}
+```
+
+### 默认 Schema API 端点
+
+Starter 默认注册 `/schema/**` 端点，自动将请求路径映射到 classpath .json 文件并返回 JSON，无需编写 Controller：
+
+```
+GET /schema/users        → classpath:amis/users.json        → 200 application/json
+GET /schema/admin/roles  → classpath:amis/admin/roles.json  → 200 application/json
+GET /schema/not-exist    → 无匹配文件                        → 404
+```
+
+配置方式：
+
+```yaml
+amis:
+  schema-path: /api/schema   # 自定义端点路径（默认 /schema）
+  # schema-enabled: false    # 禁用默认端点
 ```
 
 ### customCss / customJs 通过 Model 注入
@@ -508,6 +552,8 @@ amis:
   ctx: ""                   # 上下文路径（默认自动读取 server.servlet.context-path）
   schema-prefix: "classpath:amis/"  # JSON Schema 文件前缀（默认 classpath:amis/）
   cache-enabled: true       # 是否启用 Schema 文件内存缓存（默认 true）
+  schema-path: /schema      # Schema API 端点路径（默认 /schema）
+  schema-enabled: true      # 是否启用默认 Schema API 端点（默认 true）
   app:
     brand-name: "Admin"     # 品牌名（默认 Admin）
     logo: "img/logo.png"    # Logo（默认 img/logo.png）

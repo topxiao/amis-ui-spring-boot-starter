@@ -20,7 +20,7 @@ Spring Boot 3 Starter，用于快速集成 [Amis](https://aisuda.bce.baidu.com/a
 <dependency>
     <groupId>com.github.topxiao</groupId>
     <artifactId>amis-ui-spring-boot-starter</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.1</version>
 </dependency>
 ```
 
@@ -104,6 +104,8 @@ amis:
 | `amis.ctx` | String | `""` | 应用上下文路径（默认自动读取 `server.servlet.context-path`） |
 | `amis.schema-prefix` | String | `"classpath:amis/"` | ClasspathAmisSchemaProvider 的 JSON 文件前缀 |
 | `amis.cache-enabled` | Boolean | `true` | 是否启用 Schema 文件内存缓存 |
+| `amis.schema-path` | String | `"/schema"` | Schema API 端点基础路径 |
+| `amis.schema-enabled` | Boolean | `true` | 是否启用默认 Schema API 端点 |
 
 ### App 属性
 
@@ -194,7 +196,9 @@ public class RuntimeInfoSchemaProvider implements AmisSchemaProvider {
 
 ## 视图名渲染
 
-Starter 注册了 `AmisViewResolver`，解析 `amis:` 前缀视图名：
+Starter 注册了 `AmisViewResolver` 和 `JsonViewResolver`，分别解析 `amis:` 和 `json:` 前缀视图名：
+
+### amis: 前缀 — HTML 页面渲染
 
 ```java
 @Controller
@@ -216,6 +220,46 @@ public class ViewController {
     // amis:xxx → 如果 classpath 中没有 xxx.json 且无自定义 provider 处理，
     // resolver 返回 null，交给下一个 ViewResolver
 }
+```
+
+### json: 前缀 — 原始 JSON 返回
+
+`JsonViewResolver` 解析 `json:` 前缀，通过 `AmisSchemaProvider` 链加载 .json 文件内容，直接以 `application/json` 返回浏览器（不嵌入 HTML）：
+
+```java
+@Controller
+public class SchemaController {
+
+    // json:users → 加载 classpath:amis/users.json → 返回原始 JSON
+    @GetMapping("/api/schema/{name}")
+    public String schema(@PathVariable String name) {
+        return "json:" + name;
+    }
+
+    // 支持子目录：json:admin/roles → 加载 classpath:amis/admin/roles.json
+    @GetMapping("/api/schema/admin/{name}")
+    public String adminSchema(@PathVariable String name) {
+        return "json:admin/" + name;
+    }
+}
+```
+
+### 默认 Schema API 端点
+
+Starter 默认注册了 `/schema/**` 端点，自动将请求路径映射到 classpath 下的 .json 文件并返回 JSON 响应：
+
+```
+GET /schema/users        → 加载 classpath:amis/users.json        → 200 application/json
+GET /schema/admin/roles  → 加载 classpath:amis/admin/roles.json  → 200 application/json
+GET /schema/not-exist    → 无匹配文件                             → 404
+```
+
+无需编写任何 Controller，开箱即用。可通过配置关闭或自定义路径：
+
+```yaml
+amis:
+  schema-path: /api/schema   # 自定义端点路径
+  # schema-enabled: false    # 禁用默认端点
 ```
 
 ### customCss / customJs
