@@ -62,9 +62,18 @@ public class AmisProperties {
      * 是否启用 Schema 文件内存缓存
      */
     private boolean cacheEnabled = true;
+    /**
+     * Schema API 端点基础路径，访问 {schemaPath}/** 返回 classpath 对应 .json 文件内容
+     */
+    private String schemaPath = "/schema";
+    /**
+     * 是否启用 Schema API 端点
+     */
+    private boolean schemaEnabled = true;
 
     private static final Pattern SAFE_PATH_PATTERN = Pattern.compile("^[a-zA-Z0-9._\\-]+$");
     private static final Pattern SAFE_CTX_PATTERN = Pattern.compile("^/[a-zA-Z0-9/._\\-]*$");
+    private static final Pattern SAFE_SCHEMA_PATH_PATTERN = Pattern.compile("^/[a-zA-Z0-9/._\\-]+$");
 
     static void validateSafePath(String value, String fieldName) {
         if (value != null && !value.isEmpty() && !SAFE_PATH_PATTERN.matcher(value).matches()) {
@@ -146,6 +155,26 @@ public class AmisProperties {
 
     public void setCacheEnabled(boolean cacheEnabled) {
         this.cacheEnabled = cacheEnabled;
+    }
+
+    public String getSchemaPath() {
+        return schemaPath;
+    }
+
+    public void setSchemaPath(String schemaPath) {
+        if (schemaPath != null && !SAFE_SCHEMA_PATH_PATTERN.matcher(schemaPath).matches()) {
+            throw new IllegalArgumentException(
+                    "schemaPath must start with '/' and contain only alphanumeric, slash, dot, hyphen and underscore");
+        }
+        this.schemaPath = schemaPath;
+    }
+
+    public boolean isSchemaEnabled() {
+        return schemaEnabled;
+    }
+
+    public void setSchemaEnabled(boolean schemaEnabled) {
+        this.schemaEnabled = schemaEnabled;
     }
 
     /**
