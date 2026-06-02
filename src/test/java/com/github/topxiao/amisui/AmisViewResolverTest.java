@@ -23,7 +23,7 @@ class AmisViewResolverTest {
         AmisProperties props = new AmisProperties();
         ObjectMapper mapper = new ObjectMapper();
         var env = new org.springframework.mock.env.MockEnvironment();
-        service = new AmisViewService(props, env, mapper, List.of(), List.of(), List.of());
+        service = new AmisViewService(props, env, mapper, List.of(), List.of(), List.of(), List.of());
 
         appProvider = new AmisSchemaProvider() {
             @Override

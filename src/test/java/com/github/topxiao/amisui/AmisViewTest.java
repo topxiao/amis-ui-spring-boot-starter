@@ -23,7 +23,7 @@ class AmisViewTest {
     @BeforeEach
     void setUp() {
         properties = new AmisProperties();
-        service = new AmisViewService(properties, null, new ObjectMapper(), List.of(), List.of(), List.of());
+        service = new AmisViewService(properties, null, new ObjectMapper(), List.of(), List.of(), List.of(), List.of());
     }
 
     // -------------------------------------------------------------------------
@@ -149,7 +149,7 @@ class AmisViewTest {
         };
         // Recreate service with the interceptor
         AmisViewService svcWithInterceptor = new AmisViewService(properties, null, new ObjectMapper(),
-                List.of(), List.of(), List.of(interceptor));
+                List.of(), List.of(), List.of(interceptor), List.of());
 
         AmisView view = new AmisView(svcWithInterceptor, false);
         Map<String, Object> model = new HashMap<>();

@@ -480,7 +480,61 @@ public class GaTrackerInterceptor implements AmisRenderInterceptor {
 
 ---
 
-## 11. 使用 AmisPages 工具类
+## 11. 扩展：API Adaptor
+
+通过 `AmisApiAdaptor` 接口或配置属性注入 amis SDK 的 `requestAdaptor` / `responseAdaptor`，在前端 API 请求/响应流程中插入自定义逻辑。App 和 Schema 两种渲染模式均生效。
+
+### 11.1 配置属性方式
+
+```yaml
+amis:
+  request-adaptor: |
+    api.headers['Authorization'] = 'Bearer ' + localStorage.getItem('token');
+    return api;
+  response-adaptor: |
+    if (payload.status === 401) {
+      window.location.href = '/login';
+    }
+    return payload;
+```
+
+配置值为 JS 函数体字符串（不含 `function` 声明和花括号）。未配置时默认为 `return api;` / `return payload;`。
+
+### 11.2 Java 接口方式
+
+注册 `AmisApiAdaptor` Bean，优先级高于配置属性。适合需要根据环境动态切换逻辑的场景：
+
+```java
+@Component
+public class AuthApiAdaptor implements AmisApiAdaptor {
+
+    @Override
+    public String getRequestAdaptor() {
+        return "api.headers['Authorization'] = 'Bearer ' + localStorage.getItem('token'); return api;";
+    }
+
+    @Override
+    public String getResponseAdaptor() {
+        return "if (payload.status === 401) { window.location.href = '/login'; } return payload;";
+    }
+}
+```
+
+### 11.3 优先级
+
+```
+AmisApiAdaptor Bean（first-non-null-wins，按 @Order 排序）
+  → 有非 null 返回值则立即使用
+  → 全部返回 null 则降级到配置属性
+配置属性（amis.request-adaptor / amis.response-adaptor）
+  → 有值则使用
+  → 无值则使用默认值
+默认值：requestAdaptor = "return api;"，responseAdaptor = "return payload;"
+```
+
+---
+
+## 12. 使用 AmisPages 工具类
 
 `AmisPages` 提供静态方法快速构建 `Page` 对象：
 
@@ -524,7 +578,7 @@ List<AmisProperties.Page> pages = List.of(userPage, parentPage, systemGroup);
 
 ---
 
-## 12. 带上下文路径部署
+## 13. 带上下文路径部署
 
 当应用部署在非根路径时（如 `https://example.com/myapp`），配置 `ctx`：
 
@@ -554,6 +608,8 @@ amis:
   cache-enabled: true       # 是否启用 Schema 文件内存缓存（默认 true）
   schema-path: /schema      # Schema API 端点路径（默认 /schema）
   schema-enabled: true      # 是否启用默认 Schema API 端点（默认 true）
+  request-adaptor: ""       # requestAdaptor JS 函数体（默认 "return api;"）
+  response-adaptor: ""      # responseAdaptor JS 函数体（默认 "return payload;"）
   app:
     brand-name: "Admin"     # 品牌名（默认 Admin）
     logo: "img/logo.png"    # Logo（默认 img/logo.png）

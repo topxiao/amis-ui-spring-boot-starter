@@ -1,6 +1,7 @@
 package com.github.topxiao.amisui;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.topxiao.amisui.ext.AmisApiAdaptor;
 import com.github.topxiao.amisui.ext.AmisPageCustomizer;
 import com.github.topxiao.amisui.ext.AmisPropertiesCustomizer;
 import com.github.topxiao.amisui.ext.AmisRenderContext;
@@ -23,6 +24,8 @@ import java.util.Map;
 public class AmisViewService {
 
     private static final Logger log = LoggerFactory.getLogger(AmisViewService.class);
+    private static final String DEFAULT_REQUEST_ADAPTOR = "return api;";
+    private static final String DEFAULT_RESPONSE_ADAPTOR = "return payload;";
 
     private final AmisProperties properties;
     private final Environment environment;
@@ -30,12 +33,14 @@ public class AmisViewService {
     private final List<AmisPropertiesCustomizer> propertiesCustomizers;
     private final List<AmisPageCustomizer> pageCustomizers;
     private final List<AmisRenderInterceptor> renderInterceptors;
+    private final List<AmisApiAdaptor> apiAdaptors;
 
     public AmisViewService(AmisProperties properties, Environment environment,
                            ObjectMapper objectMapper,
                            List<AmisPropertiesCustomizer> propertiesCustomizers,
                            List<AmisPageCustomizer> pageCustomizers,
-                           List<AmisRenderInterceptor> renderInterceptors) {
+                           List<AmisRenderInterceptor> renderInterceptors,
+                           List<AmisApiAdaptor> apiAdaptors) {
         if (properties == null) {
             properties = new AmisProperties();
         }
@@ -48,6 +53,7 @@ public class AmisViewService {
         this.propertiesCustomizers = propertiesCustomizers != null ? propertiesCustomizers : List.of();
         this.pageCustomizers = pageCustomizers != null ? pageCustomizers : List.of();
         this.renderInterceptors = renderInterceptors != null ? renderInterceptors : List.of();
+        this.apiAdaptors = apiAdaptors != null ? apiAdaptors : List.of();
     }
 
     // -------------------------------------------------------------------------
@@ -158,6 +164,32 @@ public class AmisViewService {
             }
         }
         return result;
+    }
+
+    /**
+     * 解析 requestAdaptor：Bean > 配置属性 > 默认值
+     */
+    public String resolveRequestAdaptor() {
+        for (AmisApiAdaptor adaptor : apiAdaptors) {
+            String script = adaptor.getRequestAdaptor();
+            if (script != null) {
+                return script;
+            }
+        }
+        return properties.getRequestAdaptor() != null ? properties.getRequestAdaptor() : DEFAULT_REQUEST_ADAPTOR;
+    }
+
+    /**
+     * 解析 responseAdaptor：Bean > 配置属性 > 默认值
+     */
+    public String resolveResponseAdaptor() {
+        for (AmisApiAdaptor adaptor : apiAdaptors) {
+            String script = adaptor.getResponseAdaptor();
+            if (script != null) {
+                return script;
+            }
+        }
+        return properties.getResponseAdaptor() != null ? properties.getResponseAdaptor() : DEFAULT_RESPONSE_ADAPTOR;
     }
 
     // -------------------------------------------------------------------------

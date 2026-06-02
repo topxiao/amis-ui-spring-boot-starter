@@ -136,10 +136,10 @@ public class AmisView implements View {
                         },
                         {
                             requestAdaptor(api) {
-                                return api;
+                                ${requestAdaptor}
                             },
                             responseAdaptor(api, payload, query, request, response) {
-                                return payload;
+                                ${responseAdaptor}
                             },
                             updateLocation: (location, replace) => {
                                 location = normalizeLink(location);
@@ -267,7 +267,15 @@ public class AmisView implements View {
                   const schemaJson = ${schemaJson};
 
                   AmisUtil.ready((amis) => {
-                    amis.embed("#root", schemaJson);
+                    amis.embed("#root", schemaJson, {}, {
+                      requestAdaptor(api) {
+                        ${requestAdaptor}
+                      },
+                      responseAdaptor(api, payload, query, request, response) {
+                        ${responseAdaptor}
+                      },
+                      theme: '${theme}'
+                    });
                   });
 
                   ${customJs}
@@ -347,6 +355,8 @@ public class AmisView implements View {
                 .replace("${schemaJson}", schemaJson)
                 .replace("${ctx}", resolveCtx(props))
                 .replace("${theme}", resolveTheme(props))
+                .replace("${requestAdaptor}", service.resolveRequestAdaptor())
+                .replace("${responseAdaptor}", service.resolveResponseAdaptor())
                 .replace("${customCss}", getStringOrDefault(model, "customCss", ""))
                 .replace("${customJs}", getStringOrDefault(model, "customJs", ""));
 
@@ -381,6 +391,8 @@ public class AmisView implements View {
                 .replace("${appJson}", appJson)
                 .replace("${ctx}", resolveCtx(props))
                 .replace("${theme}", resolveTheme(props))
+                .replace("${requestAdaptor}", service.resolveRequestAdaptor())
+                .replace("${responseAdaptor}", service.resolveResponseAdaptor())
                 .replace("${customCss}", getStringOrDefault(model, "customCss", ""))
                 .replace("${customJs}", getStringOrDefault(model, "customJs", ""));
 
@@ -392,18 +404,21 @@ public class AmisView implements View {
     // -------------------------------------------------------------------------
 
     private String resolveCtx(AmisProperties props) {
-        return Optional.ofNullable(props.getCtx())
-                .filter(StringUtils::hasText)
-                .orElseGet(() -> {
-                    Environment env = service.getEnvironment();
-                    return env != null ? env.getProperty("server.servlet.context-path", "") : "";
-                });
+        String ctx = props.getCtx();
+        if (StringUtils.hasText(ctx)) {
+            return ctx;
+        }
+        Environment env = service.getEnvironment();
+        if (env == null) {
+            return "";
+        }
+        String contextPath = env.getProperty("server.servlet.context-path", "");
+        return contextPath != null ? contextPath : "";
     }
 
     private String resolveTheme(AmisProperties props) {
-        return Optional.ofNullable(props.getApp().getTheme())
-                .filter(StringUtils::hasText)
-                .orElse(DEFAULT_THEME);
+        String theme = props.getApp().getTheme();
+        return StringUtils.hasText(theme) ? theme : DEFAULT_THEME;
     }
 
     private String getStringOrDefault(Map<String, Object> model, String key, String defaultValue) {

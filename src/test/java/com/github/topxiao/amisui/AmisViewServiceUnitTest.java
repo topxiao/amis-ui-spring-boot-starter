@@ -18,7 +18,7 @@ class AmisViewServiceUnitTest {
     @BeforeEach
     void setUp() {
         properties = new AmisProperties();
-        service = new AmisViewService(properties, null, new ObjectMapper(), List.of(), List.of(), List.of());
+        service = new AmisViewService(properties, null, new ObjectMapper(), List.of(), List.of(), List.of(), List.of());
     }
 
     // --- schemaJson validation ---
@@ -55,7 +55,7 @@ class AmisViewServiceUnitTest {
     @Test
     void renderHtml_nullProperties_defaultsToNewProperties() {
         // Constructor defaults null properties to new AmisProperties()
-        AmisViewService svc = new AmisViewService(null, null, new ObjectMapper(), List.of(), List.of(), List.of());
+        AmisViewService svc = new AmisViewService(null, null, new ObjectMapper(), List.of(), List.of(), List.of(), List.of());
         assertNotNull(svc.getProperties());
         assertNotNull(svc.getProperties().getApp());
         // Should not throw — rendering works with defaults
@@ -66,7 +66,7 @@ class AmisViewServiceUnitTest {
 
     @Test
     void renderHtml_schemaJson_nullProperties_defaultsAndRenders() {
-        AmisViewService svc = new AmisViewService(null, null, new ObjectMapper(), List.of(), List.of(), List.of());
+        AmisViewService svc = new AmisViewService(null, null, new ObjectMapper(), List.of(), List.of(), List.of(), List.of());
         String result = svc.renderHtml("{\"type\":\"page\"}");
         assertNotNull(result);
         assertTrue(result.contains("<!doctype html"));
@@ -91,7 +91,7 @@ class AmisViewServiceUnitTest {
         };
 
         AmisViewService svc = new AmisViewService(properties, null, new ObjectMapper(),
-                List.of(), List.of(), List.of(throwingInterceptor));
+                List.of(), List.of(), List.of(throwingInterceptor), List.of());
 
         // Rendering should still succeed despite interceptor exceptions
         String result = svc.renderHtml("{\"type\":\"page\"}");

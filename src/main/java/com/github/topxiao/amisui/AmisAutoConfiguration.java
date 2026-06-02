@@ -1,6 +1,7 @@
 package com.github.topxiao.amisui;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.topxiao.amisui.ext.AmisApiAdaptor;
 import com.github.topxiao.amisui.ext.AmisPageCustomizer;
 import com.github.topxiao.amisui.ext.AmisPropertiesCustomizer;
 import com.github.topxiao.amisui.ext.AmisRenderInterceptor;
@@ -43,9 +44,10 @@ public class AmisAutoConfiguration {
                                            ObjectMapper objectMapper,
                                            @Nullable List<AmisPropertiesCustomizer> propertiesCustomizers,
                                            @Nullable List<AmisPageCustomizer> pageCustomizers,
-                                           @Nullable List<AmisRenderInterceptor> renderInterceptors) {
+                                           @Nullable List<AmisRenderInterceptor> renderInterceptors,
+                                           @Nullable List<AmisApiAdaptor> apiAdaptors) {
         return new AmisViewService(properties, environment, objectMapper,
-                propertiesCustomizers, pageCustomizers, renderInterceptors);
+                propertiesCustomizers, pageCustomizers, renderInterceptors, apiAdaptors);
     }
 
     /**

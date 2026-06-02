@@ -70,6 +70,14 @@ public class AmisProperties {
      * 是否启用 Schema API 端点
      */
     private boolean schemaEnabled = true;
+    /**
+     * requestAdaptor JS 函数体，注入到 amis.embed() 的 env options。
+     */
+    private String requestAdaptor;
+    /**
+     * responseAdaptor JS 函数体，注入到 amis.embed() 的 env options。
+     */
+    private String responseAdaptor;
 
     private static final Pattern SAFE_PATH_PATTERN = Pattern.compile("^[a-zA-Z0-9._\\-]+$");
     private static final Pattern SAFE_CTX_PATTERN = Pattern.compile("^/[a-zA-Z0-9/._\\-]*$");
@@ -175,6 +183,22 @@ public class AmisProperties {
 
     public void setSchemaEnabled(boolean schemaEnabled) {
         this.schemaEnabled = schemaEnabled;
+    }
+
+    public String getRequestAdaptor() {
+        return requestAdaptor;
+    }
+
+    public void setRequestAdaptor(String requestAdaptor) {
+        this.requestAdaptor = requestAdaptor;
+    }
+
+    public String getResponseAdaptor() {
+        return responseAdaptor;
+    }
+
+    public void setResponseAdaptor(String responseAdaptor) {
+        this.responseAdaptor = responseAdaptor;
     }
 
     /**

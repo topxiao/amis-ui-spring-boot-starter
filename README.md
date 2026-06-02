@@ -11,6 +11,7 @@ Spring Boot 3 Starter，用于快速集成 [Amis](https://aisuda.bce.baidu.com/a
 - `@ConfigurationProperties` 类型安全配置
 - Schema Provider 链式解析（classpath JSON、配置属性、自定义）
 - 可扩展的属性自定义器、页面自定义器、渲染拦截器
+- API Adaptor 扩展（requestAdaptor / responseAdaptor），支持配置属性和 Java 接口两种方式
 
 ## 快速开始
 
@@ -20,7 +21,7 @@ Spring Boot 3 Starter，用于快速集成 [Amis](https://aisuda.bce.baidu.com/a
 <dependency>
     <groupId>com.github.topxiao</groupId>
     <artifactId>amis-ui-spring-boot-starter</artifactId>
-    <version>1.2.1</version>
+    <version>1.3.0</version>
 </dependency>
 ```
 
@@ -106,6 +107,8 @@ amis:
 | `amis.cache-enabled` | Boolean | `true` | 是否启用 Schema 文件内存缓存 |
 | `amis.schema-path` | String | `"/schema"` | Schema API 端点基础路径 |
 | `amis.schema-enabled` | Boolean | `true` | 是否启用默认 Schema API 端点 |
+| `amis.request-adaptor` | String | `"return api;"` | requestAdaptor JS 函数体 |
+| `amis.response-adaptor` | String | `"return payload;"` | responseAdaptor JS 函数体 |
 
 ### App 属性
 
@@ -290,6 +293,7 @@ Starter 通过 Spring `List<T>` 构造器注入收集扩展，注册 `@Component
 | `AmisPropertiesCustomizer` | `customize(AmisProperties)` | 渲染前动态修改配置属性 |
 | `AmisPageCustomizer` | `customizePages(List<Page>, AmisProperties)` | 动态添加/修改页面菜单 |
 | `AmisRenderInterceptor` | `beforeRender(ctx)` / `afterRender(ctx, html)` | 拦截渲染过程 |
+| `AmisApiAdaptor` | `getRequestAdaptor()` / `getResponseAdaptor()` | 自定义 API 请求/响应拦截 JS 脚本 |
 
 ### 1. 自定义 SchemaProvider
 
@@ -367,6 +371,43 @@ public class AnalyticsInterceptor implements AmisRenderInterceptor {
 ```
 
 > 拦截器抛异常时会被跳过并记录 WARN 日志，不影响渲染。
+
+### 5. API Adaptor
+
+通过 `AmisApiAdaptor` 接口或配置属性注入 amis SDK 的 `requestAdaptor` / `responseAdaptor`，在前端 API 请求/响应流程中插入自定义逻辑。App 和 Schema 两种渲染模式均生效。
+
+**配置属性方式：**
+
+```yaml
+amis:
+  request-adaptor: |
+    api.headers['Authorization'] = 'Bearer ' + localStorage.getItem('token');
+    return api;
+  response-adaptor: |
+    if (payload.status === 401) {
+      window.location.href = '/login';
+    }
+    return payload;
+```
+
+**Java 接口方式（优先级高于配置属性）：**
+
+```java
+@Component
+public class AuthApiAdaptor implements AmisApiAdaptor {
+    @Override
+    public String getRequestAdaptor() {
+        return "api.headers['Authorization'] = 'Bearer ' + localStorage.getItem('token'); return api;";
+    }
+
+    @Override
+    public String getResponseAdaptor() {
+        return "if (payload.status === 401) { window.location.href = '/login'; } return payload;";
+    }
+}
+```
+
+**解析优先级**：`AmisApiAdaptor` Bean（first-non-null-wins） > 配置属性 > 默认值（`return api;` / `return payload;`）
 
 ### 优先级控制
 
