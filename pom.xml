@@ -13,7 +13,7 @@
 
     <groupId>com.github.topxiao</groupId>
     <artifactId>amis-ui-spring-boot-starter</artifactId>
-    <version>1.2.1</version>
+    <version>1.2.2</version>
     <packaging>jar</packaging>
 
     <name>amis-ui-spring-boot-starter</name>

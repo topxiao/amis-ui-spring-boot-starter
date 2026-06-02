@@ -82,8 +82,9 @@ public class AmisWebConfiguration implements WebMvcConfigurer {
         List<AmisSchemaProvider> providerList = providers != null ? providers : List.of();
 
         HttpRequestHandler handler = (HttpServletRequest request, HttpServletResponse response) -> {
-            String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
-            String subPath = path.substring(basePath.length());
+            // SimpleUrlHandlerMapping 的 PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE
+            // 返回的是 pattern 内部路径（即 /** 匹配的部分），不含 basePath 前缀
+            String subPath = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
             if (subPath.startsWith("/")) {
                 subPath = subPath.substring(1);
             }
